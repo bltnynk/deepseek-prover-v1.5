@@ -16,7 +16,7 @@ from prover.utils import ConcurrentJob
 class TreeNode(object):
     def __init__(self, parent=None, code=None, **kwargs):
         self.parent = parent
-        self.children = dict()
+        self.children = dict() # key is the tree edges
         self._info = {key: val for key, val in kwargs.items()}
         if code is not None:
             self.update_code(code)
@@ -47,7 +47,7 @@ class TreeNode(object):
     def __getitem__(self, key):
         return self._info[key]
     
-    def to_node_list(self):
+    def to_node_list(self): # node list in preorder
         return sum([child.to_node_list() for _, child in self.children.items()], start=[self])
     
     def to_dict(self):
@@ -60,7 +60,7 @@ class TreeNode(object):
         )
     
     @classmethod
-    def from_dict(cls, dict_data, parent=None):
+    def from_dict(cls, dict_data, parent=None): #construct tree from dict
         node = cls(
             parent=parent,
             **dict_data['info'],
@@ -82,7 +82,7 @@ class TreeNode(object):
         if self.parent is not None:
             self.parent.update_reward(reward, gamma, first_node=False)
     
-    def start_new_job(self, gamma, first_node=True):
+    def start_new_job(self, gamma, first_node=True): # update the reward to Q_sa from bottomup
         if first_node:
             self._num_running_jobs += 1
         self._subtree_num_running_jobs += 1
@@ -98,7 +98,7 @@ class TreeNode(object):
         if self.parent is not None:
             self.parent.complete_job(gamma, first_node=False)
     
-    def _update_value(self, gamma):
+    def _update_value(self, gamma): 
         discounted_rewards = self._info['_discounted_rewards'] * (gamma ** self._num_running_jobs)
         discounted_visitation = \
             self._info['_discounted_visitation'] * (gamma ** self._num_running_jobs) \
@@ -119,7 +119,7 @@ class RMaxTS(SamplingAlgorithmBase):
         super().__init__(**kwargs)
         self.gamma = self.cfg.get('gamma', 0.99)
         self.sample_num = self.cfg.get('sample_num', 6400)
-        self.concurrent_num = self.cfg.get('concurrent_num', 32)
+        self.concurrent_num = self.cfg.get('concurrent_num', 32) # Tree parallelization
         self.tactic_state_comment = self.cfg.get('tactic_state_comment', True)
         self.ckpt_interval = self.cfg.get('ckpt_interval', 128)
 
@@ -178,7 +178,7 @@ class RMaxTS(SamplingAlgorithmBase):
             depth=parent['depth'] + 1,
         )
     
-    def _tree_step(self, node, edge, code):
+    def _tree_step(self, node, edge, code): # edge comes after node
         if edge not in node.children:
             new_node = self._tree_new_child(node)
             node.children[edge] = new_node
@@ -187,10 +187,11 @@ class RMaxTS(SamplingAlgorithmBase):
         child_node.update_code(code)
         return child_node
     
-    def _tree_update(self, proof):
+    def _tree_update(self, proof): # parse the partial proof to the tree
         node_walk, partial_code = self.root, str()
 
         # use tactic goals as tree edges
+        # example, if we jump from node p to c1, then the edge between p and c1 is the tactic goals after applying tactic c1.
         segments = proof.segmentation()
         prev_goal = self.root_goal
         for info in segments:
@@ -206,7 +207,7 @@ class RMaxTS(SamplingAlgorithmBase):
         return node_walk
     
     # algorithm pipeline
-    def _select_node(self):
+    def _select_node(self): # why child use subtree figures?
         node = self.root
         while len(node.children) > 0:
             num_choice = 1 + len(node.children)
@@ -223,7 +224,7 @@ class RMaxTS(SamplingAlgorithmBase):
             else:
                 node = choice_list[0][1]
         node.start_new_job(gamma=self.gamma)
-        return node
+        return node # node could be leaf or non-leaf.
     
     def _tactic_tree_generate_proof(self, data, node):
         code_prefix = node.code

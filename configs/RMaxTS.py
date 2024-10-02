@@ -5,7 +5,7 @@ from prover.algorithms import RMaxTS
 # dataset
 data_path = 'datasets/minif2f.jsonl'
 data_split = 'test'
-data_repeat = 16  # run 16 * 6400
+data_repeat = 16  # N = 16, run K = N * T = 16 * 6400
 
 # verifier
 lean_max_concurrent_requests = 64
@@ -27,7 +27,7 @@ n_search_procs = 256
 sampler = dict(
     algorithm=RMaxTS,
     gamma=0.99,
-    sample_num=6400,
+    sample_num=6400, # T
     concurrent_num=32,
     tactic_state_comment=True,
     ckpt_interval=128,

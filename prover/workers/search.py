@@ -14,7 +14,7 @@ from prover.utils import AttrDict, get_datetime
 
 class SearchProcess(mp.Process):
     def __init__(self, idx, log_dir, tokenizer_path, scheduler, data_loader, cfg):
-        self.idx = idx
+        self.idx = idx # 256 MCTS runner, this specifies the process/runner index.
         self.log_dir = Path(log_dir)
         self.scheduler = scheduler
         self.data_loader = data_loader
@@ -53,7 +53,7 @@ class SearchProcess(mp.Process):
             sample_start_time = time.time()
             # build a yield-iterator object to generate samples
             self._current_prob = f'{prob_idx}_{prob_runname}'
-            prob_log_dir = self.log_dir / self._current_prob
+            prob_log_dir = self.log_dir / self._current_prob # logs/datetime/0_amc12a_2019_p21/run1
             os.makedirs(prob_log_dir, exist_ok=True)
             sample_generator = self.sampler.sample(
                 data=data,
@@ -61,7 +61,7 @@ class SearchProcess(mp.Process):
             )
             # submit requests to the verification server when receiving from the generator
             candidate_list, info_list, request_id_list = [], [], []
-            for sample, info in sample_generator:
+            for sample, info in sample_generator: # sample is the generated proof, and other info
                 candidate = self._post_process(data, sample)
                 candidate_list.append(candidate)
                 info_list.append(copy.deepcopy(info))

@@ -9,7 +9,7 @@ from prover.utils import get_datetime, load_jsonl_objects, MODEL_FORMAT
 class SamplingAlgorithmBase(object):
     def __init__(self, scheduler, tokenizer_path, process_print, cfg, **kwargs):
         os.environ['TOKENIZERS_PARALLELISM'] = 'false'
-        self.scheduler = scheduler
+        self.scheduler = scheduler # generator_scheduler
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
         self.process_print = process_print
         self.cfg = cfg
@@ -26,7 +26,7 @@ class SamplingAlgorithmBase(object):
     def algorithm_name(self):
         return self.__class__.__name__
     
-    def _post_sample_info(self, **kwargs):
+    def _post_sample_info(self, **kwargs): # just some metainfo, nothing important
         return dict(
             algorithm=self.algorithm_name,
             datetime=get_datetime(),
@@ -38,10 +38,10 @@ class SamplingAlgorithmBase(object):
     
     def _preprocess_data(self, input_data):
         if self.few_shot_dataset is None or self.few_shot_num == 0:
-            return input_data
+            return input_data # no few-shot
         return {
             **input_data,
-            '_extra_header': ''.join([
+            '_extra_header': ''.join([ # few-shot exemplars
                 self.few_shot_func(self.few_shot_dataset[idx])
                 for idx in np.random.choice([
                     _idx for _idx, _data in enumerate(self.few_shot_dataset)

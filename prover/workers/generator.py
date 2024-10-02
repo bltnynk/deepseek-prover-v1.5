@@ -36,10 +36,10 @@ class GeneratorProcess(mp.Process):
                 break
             model_inputs = [
                 ''.join([
-                    item.get('_extra_header', str()),
+                    item.get('_extra_header', str()), # few-shot exemplars
                     self.prompt_func(item),
-                    item.get('_extra_prompt', str()),
-                ]) for _, _, item in inputs
+                    item.get('_extra_prompt', str()), # intermediate tactic state comment block
+                ]) for _, _, item in inputs # time.time(), request_id, data
             ]
             model_outputs = llm.generate(
                 model_inputs,

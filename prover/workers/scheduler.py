@@ -76,7 +76,7 @@ class ProcessScheduler(object):
             self.request_counter.value += 1
             request_id = self.request_counter.value
             self.request_statuses[request_id] = None
-            self.task_queue.put((time.time(), request_id, data))
+            self.task_queue.put((time.time(), request_id, data)) # for generator_submit_request, data ~ the problem json from datasets, with some addtional fields for few-shot prompting
         return request_id
     
     def submit_all_request(self, data_list):

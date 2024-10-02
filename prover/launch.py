@@ -74,7 +74,7 @@ if __name__ == "__main__":
             data_loader=data_loader,
             cfg=cfg,
         )
-        for i in range(min(cfg.n_search_procs, data_loader.size()))
+        for i in range(min(cfg.n_search_procs, data_loader.size())) # Root Parallelization
     ]
     for p in search_processes:
         p.start()
